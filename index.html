@@ -1,0 +1,1415 @@
+<!doctype html>
+<html lang="es-MX">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Simulacro interactivo de 140 reactivos adaptado al perfil de Ingeniería en Computación Inteligente de la Universidad de Colima.">
+  <title>Simulacro EGEL · Computación Inteligente UdeC</title>
+  <style>
+    :root {
+      --ink: #152136;
+      --muted: #64748b;
+      --paper: #ffffff;
+      --canvas: #eef3f8;
+      --line: #d9e2ec;
+      --brand: #133a63;
+      --brand-2: #0b7285;
+      --accent: #e9b949;
+      --good: #16794d;
+      --good-bg: #e8f7ef;
+      --bad: #b42318;
+      --bad-bg: #fff0ee;
+      --shadow: 0 18px 50px rgba(25, 45, 70, .12);
+    }
+
+    * { box-sizing: border-box; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 8% 5%, rgba(11, 114, 133, .11), transparent 24rem),
+        linear-gradient(135deg, #f8fafc 0%, var(--canvas) 100%);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    button, input { font: inherit; }
+
+    button { cursor: pointer; }
+
+    .topbar {
+      background: var(--brand);
+      color: #fff;
+      border-bottom: 4px solid var(--accent);
+    }
+
+    .topbar__inner {
+      width: min(1180px, calc(100% - 32px));
+      margin: auto;
+      padding: 18px 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+    }
+
+    .identity { display: flex; align-items: center; gap: 14px; }
+
+    .mark {
+      width: 46px;
+      height: 46px;
+      display: grid;
+      place-items: center;
+      border: 1px solid rgba(255,255,255,.35);
+      border-radius: 12px;
+      font-weight: 900;
+      letter-spacing: -.04em;
+      background: rgba(255,255,255,.09);
+    }
+
+    .eyebrow {
+      margin: 0 0 3px;
+      color: #a9d7df;
+      font-size: .73rem;
+      font-weight: 800;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(1rem, 2.2vw, 1.35rem);
+      line-height: 1.2;
+    }
+
+    .module-pill {
+      flex: none;
+      padding: 8px 12px;
+      border: 1px solid rgba(255,255,255,.25);
+      border-radius: 999px;
+      color: #dbeafe;
+      font-size: .82rem;
+      font-weight: 700;
+    }
+
+    .shell {
+      width: min(1180px, calc(100% - 32px));
+      margin: 30px auto 46px;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 300px;
+      gap: 24px;
+      align-items: start;
+    }
+
+    .panel {
+      background: rgba(255,255,255,.96);
+      border: 1px solid rgba(217,226,236,.9);
+      border-radius: 20px;
+      box-shadow: var(--shadow);
+    }
+
+    .exam { overflow: hidden; }
+
+    .progress-wrap {
+      padding: 18px 24px;
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      border-bottom: 1px solid var(--line);
+      background: #fbfdff;
+    }
+
+    .progress-track {
+      height: 9px;
+      flex: 1;
+      overflow: hidden;
+      border-radius: 99px;
+      background: #e4ebf2;
+    }
+
+    .progress-bar {
+      width: 0;
+      height: 100%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, var(--brand-2), #2aa5b7);
+      transition: width .35s ease;
+    }
+
+    .progress-text {
+      min-width: 82px;
+      color: var(--muted);
+      font-size: .82rem;
+      font-weight: 800;
+      text-align: right;
+    }
+
+    .question-area { padding: clamp(24px, 5vw, 48px); }
+
+    .question-meta {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+
+    .question-number {
+      color: var(--brand-2);
+      font-size: .78rem;
+      font-weight: 900;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+    }
+
+    .status-badge {
+      min-height: 30px;
+      padding: 6px 11px;
+      border-radius: 999px;
+      font-size: .78rem;
+      font-weight: 850;
+      visibility: hidden;
+    }
+
+    .status-badge.visible { visibility: visible; }
+    .status-badge.good { color: var(--good); background: var(--good-bg); }
+    .status-badge.bad { color: var(--bad); background: var(--bad-bg); }
+
+    .question-text {
+      margin: 0 0 28px;
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: clamp(1.16rem, 2.25vw, 1.48rem);
+      line-height: 1.52;
+      letter-spacing: -.012em;
+    }
+
+    .code-block {
+      display: none;
+      max-width: 100%;
+      margin: -8px 0 26px;
+      padding: 18px;
+      overflow-x: auto;
+      border: 1px solid #243b55;
+      border-radius: 13px;
+      color: #dce8f5;
+      background: #14263a;
+      font: 500 .88rem/1.6 "Cascadia Code", "SFMono-Regular", Consolas, monospace;
+      tab-size: 4;
+      white-space: pre;
+    }
+
+    .code-block.visible { display: block; }
+
+    .options {
+      display: grid;
+      gap: 12px;
+      border: 0;
+      padding: 0;
+      margin: 0;
+    }
+
+    .option {
+      display: grid;
+      grid-template-columns: 38px 1fr;
+      align-items: center;
+      gap: 13px;
+      min-height: 64px;
+      padding: 12px 16px;
+      border: 1.5px solid var(--line);
+      border-radius: 14px;
+      background: #fff;
+      transition: border-color .16s ease, background .16s ease, transform .16s ease;
+      user-select: none;
+    }
+
+    .option:hover:not(.locked) {
+      border-color: #76a9b4;
+      background: #f7fcfd;
+      transform: translateY(-1px);
+    }
+
+    .option:focus-within { outline: 3px solid rgba(11,114,133,.2); outline-offset: 2px; }
+
+    .option input {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .letter {
+      width: 36px;
+      height: 36px;
+      display: grid;
+      place-items: center;
+      border: 1px solid #cbd8e5;
+      border-radius: 10px;
+      color: var(--brand);
+      background: #f4f7fa;
+      font-weight: 900;
+    }
+
+    .option-text { line-height: 1.45; }
+    .option.locked { cursor: default; }
+    .option.selected { border-color: var(--brand-2); background: #f1fafb; }
+    .option.correct { border-color: #49a779; background: var(--good-bg); }
+    .option.correct .letter { color: #fff; border-color: var(--good); background: var(--good); }
+    .option.incorrect { border-color: #e38d85; background: var(--bad-bg); }
+    .option.incorrect .letter { color: #fff; border-color: var(--bad); background: var(--bad); }
+
+    .feedback {
+      display: none;
+      margin-top: 20px;
+      padding: 14px 16px;
+      border-left: 4px solid;
+      border-radius: 0 10px 10px 0;
+      font-weight: 750;
+    }
+
+    .feedback.visible { display: block; animation: reveal .25s ease both; }
+    .feedback.good { color: var(--good); border-color: var(--good); background: var(--good-bg); }
+    .feedback.bad { color: var(--bad); border-color: var(--bad); background: var(--bad-bg); }
+
+    @keyframes reveal { from { opacity: 0; transform: translateY(-4px); } }
+
+    .exam-actions {
+      padding: 18px 24px;
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      border-top: 1px solid var(--line);
+      background: #fbfdff;
+    }
+
+    .btn {
+      min-height: 44px;
+      padding: 10px 18px;
+      border: 1px solid transparent;
+      border-radius: 11px;
+      font-weight: 800;
+    }
+
+    .btn:focus-visible { outline: 3px solid rgba(11,114,133,.3); outline-offset: 2px; }
+    .btn-secondary { color: var(--brand); border-color: #cbd8e5; background: #fff; }
+    .btn-primary { color: #fff; background: var(--brand); }
+    .btn:hover:not(:disabled) { filter: brightness(1.06); transform: translateY(-1px); }
+    .btn:disabled { cursor: not-allowed; opacity: .42; }
+
+    .sidebar { position: sticky; top: 18px; padding: 22px; }
+
+    .score {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 22px;
+    }
+
+    .stat {
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: 13px;
+      background: #f8fafc;
+    }
+
+    .stat__value { display: block; color: var(--brand); font-size: 1.55rem; font-weight: 900; line-height: 1; }
+    .stat__label { display: block; margin-top: 6px; color: var(--muted); font-size: .75rem; font-weight: 700; }
+
+    .sidebar h2 { margin: 0 0 12px; font-size: .95rem; }
+
+    .module-menu {
+      display: grid;
+      gap: 9px;
+      margin-bottom: 22px;
+    }
+
+    .module-button {
+      width: 100%;
+      padding: 12px 13px;
+      display: grid;
+      grid-template-columns: 34px 1fr auto;
+      align-items: center;
+      gap: 10px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      color: var(--ink);
+      background: #fff;
+      text-align: left;
+    }
+
+    .module-button:hover { border-color: #76a9b4; background: #f7fcfd; }
+    .module-button.active { border-color: var(--brand-2); background: #edf9fa; box-shadow: inset 3px 0 0 var(--brand-2); }
+    .module-button:disabled { cursor: not-allowed; opacity: .58; border-style: dashed; background: #f8fafc; }
+    .module-button:disabled:hover { border-color: var(--line); background: #f8fafc; }
+
+    .module-index {
+      width: 32px;
+      height: 32px;
+      display: grid;
+      place-items: center;
+      border-radius: 9px;
+      color: #fff;
+      background: var(--brand);
+      font-size: .78rem;
+      font-weight: 900;
+    }
+
+    .module-copy strong { display: block; font-size: .78rem; line-height: 1.25; }
+    .module-copy small { display: block; margin-top: 3px; color: var(--muted); font-size: .67rem; line-height: 1.25; }
+    .module-count { color: var(--brand-2); font-size: .72rem; font-weight: 900; white-space: nowrap; }
+
+    .navigator {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 8px;
+    }
+
+    .nav-dot {
+      aspect-ratio: 1;
+      padding: 0;
+      border: 1px solid var(--line);
+      border-radius: 9px;
+      color: var(--muted);
+      background: #fff;
+      font-size: .78rem;
+      font-weight: 850;
+    }
+
+    .nav-dot:hover { border-color: var(--brand-2); color: var(--brand-2); }
+    .nav-dot.current { outline: 3px solid rgba(11,114,133,.19); border-color: var(--brand-2); }
+    .nav-dot.good { color: #fff; border-color: var(--good); background: var(--good); }
+    .nav-dot.bad { color: #fff; border-color: var(--bad); background: var(--bad); }
+
+    .legend {
+      margin: 18px 0;
+      padding-top: 16px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      border-top: 1px solid var(--line);
+      color: var(--muted);
+      font-size: .72rem;
+      font-weight: 700;
+    }
+
+    .legend span { display: inline-flex; align-items: center; gap: 6px; }
+    .key { width: 10px; height: 10px; border-radius: 3px; background: #fff; border: 1px solid var(--line); }
+    .key.good { border-color: var(--good); background: var(--good); }
+    .key.bad { border-color: var(--bad); background: var(--bad); }
+
+    .reset {
+      width: 100%;
+      min-height: 42px;
+      border: 1px solid #d5dee8;
+      border-radius: 10px;
+      color: #475569;
+      background: #fff;
+      font-size: .82rem;
+      font-weight: 800;
+    }
+
+    .reset:hover { color: var(--bad); border-color: #e8a7a1; }
+
+    .disclaimer {
+      margin: 14px 2px 0;
+      color: var(--muted);
+      font-size: .68rem;
+      line-height: 1.45;
+      text-align: center;
+    }
+
+    .completion {
+      display: none;
+      margin: 0 24px 24px;
+      padding: 18px;
+      border: 1px solid #aad8c0;
+      border-radius: 14px;
+      background: var(--good-bg);
+      text-align: center;
+    }
+
+    .completion.visible { display: block; }
+    .completion strong { display: block; margin-bottom: 4px; color: var(--good); font-size: 1.05rem; }
+    .completion span { color: #426b58; }
+
+    .noscript {
+      margin: 24px auto;
+      width: min(900px, calc(100% - 32px));
+      padding: 18px;
+      border: 1px solid #e38d85;
+      border-radius: 12px;
+      background: var(--bad-bg);
+      color: var(--bad);
+    }
+
+    @media (max-width: 820px) {
+      .shell { grid-template-columns: 1fr; margin-top: 18px; }
+      .sidebar { position: static; order: -1; }
+      .nav-heading, .navigator, .legend { display: none; }
+      .sidebar { padding: 14px; }
+      .score { margin-bottom: 14px; grid-template-columns: repeat(2, 1fr); }
+      .module-menu { grid-template-columns: 1fr 1fr; margin-bottom: 0; }
+      .module-button { grid-template-columns: 30px 1fr; }
+      .module-count { display: none; }
+      .reset { margin-top: 12px; }
+    }
+
+    @media (max-width: 520px) {
+      .topbar__inner, .shell { width: min(100% - 20px, 1180px); }
+      .module-pill { display: none; }
+      .question-area { padding: 24px 18px; }
+      .progress-wrap, .exam-actions { padding-left: 16px; padding-right: 16px; }
+      .option { grid-template-columns: 32px 1fr; padding: 11px; }
+      .letter { width: 32px; height: 32px; }
+      .btn { padding: 9px 13px; }
+      .module-menu { grid-template-columns: 1fr; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { scroll-behavior: auto !important; transition: none !important; animation: none !important; }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar__inner">
+      <div class="identity">
+        <div class="mark" aria-hidden="true">IS</div>
+        <div>
+          <p class="eyebrow">Simulador académico · Perfil UdeC</p>
+          <h1>Ingeniería en Computación Inteligente</h1>
+        </div>
+      </div>
+      <div class="module-pill">4 partes · 140 reactivos</div>
+    </div>
+  </header>
+
+  <noscript><div class="noscript">Activa JavaScript en tu navegador para responder y obtener tu resultado.</div></noscript>
+
+  <main class="shell">
+    <section class="panel exam" aria-labelledby="question-title">
+      <div class="progress-wrap">
+        <div class="progress-track" aria-label="Progreso del examen">
+          <div class="progress-bar" id="progressBar"></div>
+        </div>
+        <div class="progress-text" id="progressText">0 de 35</div>
+      </div>
+
+      <div class="question-area">
+        <div class="question-meta">
+          <span class="question-number" id="questionNumber">Pregunta 1 de 35</span>
+          <span class="status-badge" id="statusBadge" aria-live="polite"></span>
+        </div>
+        <h2 class="question-text" id="question-title"></h2>
+        <pre class="code-block" id="codeBlock" aria-label="Código de la pregunta"></pre>
+        <fieldset class="options" id="options" aria-label="Opciones de respuesta"></fieldset>
+        <div class="feedback" id="feedback" role="status" aria-live="polite"></div>
+      </div>
+
+      <div class="completion" id="completion" aria-live="polite">
+        <strong>Examen completado</strong>
+        <span id="completionText"></span>
+      </div>
+
+      <div class="exam-actions">
+        <button class="btn btn-secondary" id="prevBtn" type="button">← Anterior</button>
+        <button class="btn btn-primary" id="nextBtn" type="button">Siguiente →</button>
+      </div>
+    </section>
+
+    <aside class="panel sidebar" aria-label="Resumen del examen">
+      <div class="score">
+        <div class="stat">
+          <span class="stat__value" id="scoreValue">0</span>
+          <span class="stat__label">Correctas</span>
+        </div>
+        <div class="stat">
+          <span class="stat__value" id="answeredValue">0</span>
+          <span class="stat__label">Contestadas</span>
+        </div>
+      </div>
+      <h2>Partes de la guía</h2>
+      <div class="module-menu" id="moduleMenu" aria-label="Seleccionar parte">
+        <button class="module-button active" type="button" data-module="0">
+          <span class="module-index">01</span>
+          <span class="module-copy"><strong>Análisis y diseño</strong><small>Preguntas 1–35</small></span>
+          <span class="module-count" id="moduleCount0">0/35</span>
+        </button>
+        <button class="module-button" type="button" data-module="1">
+          <span class="module-index">02</span>
+          <span class="module-copy"><strong>Desarrollo e implementación</strong><small>Preguntas 36–70</small></span>
+          <span class="module-count" id="moduleCount1">0/35</span>
+        </button>
+        <button class="module-button" type="button" data-module="2">
+          <span class="module-index">03</span>
+          <span class="module-copy"><strong>Bases de datos y redes</strong><small>Preguntas 71–105</small></span>
+          <span class="module-count" id="moduleCount2">0/35</span>
+        </button>
+        <button class="module-button" type="button" data-module="3">
+          <span class="module-index">04</span>
+          <span class="module-copy"><strong>Cómputo inteligente</strong><small>Preguntas 106–140</small></span>
+          <span class="module-count" id="moduleCount3">0/35</span>
+        </button>
+      </div>
+      <h2 class="nav-heading">Navegación de la parte</h2>
+      <div class="navigator" id="navigator" aria-label="Ir a una pregunta"></div>
+      <div class="legend" aria-hidden="true">
+        <span><i class="key good"></i>Correcta</span>
+        <span><i class="key bad"></i>Incorrecta</span>
+        <span><i class="key"></i>Pendiente</span>
+      </div>
+      <button class="reset" id="resetBtn" type="button">Reiniciar intento</button>
+      <p class="disclaimer">Simulacro académico no oficial, creado con fines de estudio. No está afiliado ni avalado por CENEVAL.</p>
+    </aside>
+  </main>
+
+  <script>
+    const questions = [
+      {
+        q: "Una empresa de logística reemplazará un sistema monolítico que asigna rutas, factura servicios y monitorea vehículos. El análisis revela que las reglas de asignación cambian semanalmente, mientras que la facturación permanece estable. ¿Qué decisión de diseño reduce mejor el impacto de los cambios?",
+        o: ["Separar la asignación de rutas como un componente con interfaces explícitas", "Mantener todos los módulos juntos y aumentar la cobertura de pruebas", "Compartir directamente las tablas entre asignación y facturación", "Replicar las reglas de asignación dentro de cada módulo consumidor"], a: 0
+      },
+      {
+        q: "En una plataforma bancaria, el caso de uso “Realizar transferencia” exige autenticar al cliente y, solo cuando el monto supera cierto límite, solicitar una validación adicional. ¿Cómo debe representarse esta relación en un diagrama de casos de uso?",
+        o: ["“Realizar transferencia” incluye siempre “Validar monto elevado”", "“Validar monto elevado” extiende “Realizar transferencia” bajo una condición", "“Autenticar cliente” extiende “Validar monto elevado”", "“Realizar transferencia” generaliza “Autenticar cliente”"], a: 1
+      },
+      {
+        q: "Un hospital requiere que médicos, enfermeras y personal administrativo consulten expedientes, pero con permisos diferentes según su función y el contexto clínico. ¿Qué artefacto permite especificar mejor estas reglas durante el análisis?",
+        o: ["Una matriz de roles, recursos, acciones y restricciones", "Un diagrama de despliegue con los nodos del hospital", "Un catálogo de clases con todos sus atributos privados", "Un prototipo visual sin reglas de autorización"], a: 0
+      },
+      {
+        q: "Durante el levantamiento de requisitos de una tienda en línea, ventas solicita permitir promociones acumulables, mientras finanzas establece que ningún pedido debe tener un descuento superior a 30 %. ¿Qué acción es más adecuada antes de diseñar la solución?",
+        o: ["Implementar ambos requisitos y resolver el conflicto durante las pruebas", "Priorizar automáticamente el requisito solicitado por finanzas", "Documentar el conflicto y acordar una regla verificable con los interesados", "Eliminar la acumulación de promociones para simplificar el sistema"], a: 2
+      },
+      {
+        q: "Un sistema recibe miles de lecturas por segundo desde sensores industriales. Cada lectura debe almacenarse y puede generar alertas, reportes o acciones de mantenimiento, sin que el sensor espere el procesamiento completo. ¿Qué diseño satisface mejor el escenario?",
+        o: ["Invocaciones síncronas encadenadas entre todos los módulos", "Publicación de eventos mediante un intermediario de mensajería", "Acceso directo de cada sensor a las tablas de reportes", "Procesamiento completo dentro del dispositivo antes de transmitir"], a: 1
+      },
+      {
+        q: "En un diagrama de secuencia para reservar un vuelo, el pago puede ser aprobado o rechazado. Si es aprobado se confirma el asiento; si es rechazado se libera la preasignación. ¿Qué fragmento combinado representa mejor este comportamiento?",
+        o: ["loop", "par", "alt", "break"], a: 2
+      },
+      {
+        q: "Una universidad desea sustituir su sistema de inscripciones. El requisito indica: “La plataforma deberá responder rápidamente durante los periodos de alta demanda”. ¿Cuál reformulación permite validar mejor el requisito?",
+        o: ["La plataforma deberá utilizar una arquitectura distribuida moderna", "La plataforma deberá ser más rápida que el sistema anterior", "El 95 % de las solicitudes deberá responder en menos de dos segundos con 5 000 usuarios concurrentes", "La plataforma deberá optimizar todas las consultas realizadas por los estudiantes"], a: 2
+      },
+      {
+        q: "Una aseguradora modela pólizas de automóvil, vida y gastos médicos. Todas comparten número, vigencia y titular, pero cada tipo calcula la prima mediante reglas distintas. ¿Qué diseño orientado a objetos resulta más apropiado?",
+        o: ["Una clase única con condicionales para todos los tipos de póliza", "Una superclase Póliza y especializaciones polimórficas por tipo", "Tres clases sin una abstracción común y con atributos duplicados", "Una clase Titular que contenga todos los algoritmos de cálculo"], a: 1
+      },
+      {
+        q: "Un equipo diseña una API de pedidos. Los clientes móviles necesitan conocer si un pedido está creado, pagado, preparado, enviado o cancelado, y ciertas transiciones son inválidas. ¿Qué modelo UML permite analizar mejor estas restricciones?",
+        o: ["Diagrama de estados", "Diagrama de paquetes", "Diagrama de objetos", "Diagrama de despliegue"], a: 0
+      },
+      {
+        q: "En un sistema de manufactura, una orden de producción contiene partidas que no tienen sentido fuera de la orden y deben eliminarse cuando esta se cancela definitivamente. ¿Cómo debe modelarse la relación?",
+        o: ["Dependencia entre OrdenProducción y Partida", "Asociación compartida entre objetos independientes", "Composición de OrdenProducción sobre Partida", "Generalización de Partida hacia OrdenProducción"], a: 2
+      },
+      {
+        q: "Una plataforma de comercio electrónico debe integrar diversos proveedores de pago. Cada proveedor expone operaciones y formatos diferentes, pero el dominio requiere una interfaz uniforme. ¿Qué solución de diseño es la más adecuada?",
+        o: ["Un adaptador por proveedor que implemente la interfaz del dominio", "Una copia de la lógica de pago en cada caso de uso", "Una dependencia directa del dominio hacia cada SDK externo", "Una tabla compartida que sustituya las interfaces de integración"], a: 0
+      },
+      {
+        q: "Durante el análisis de un sistema gubernamental se identifican 180 requisitos. El patrocinador solicita asegurar que cada requisito esté relacionado con su origen, diseño, prueba y versión de entrega. ¿Qué mecanismo debe establecerse?",
+        o: ["Una matriz de trazabilidad bidireccional", "Un diagrama de componentes por cada requisito", "Una lista de tareas ordenada alfabéticamente", "Un modelo entidad-relación sin identificadores de requisitos"], a: 0
+      },
+      {
+        q: "Una empresa migrará gradualmente su sistema de nómina. Durante seis meses, el sistema anterior y el nuevo deberán coexistir, aunque utilizan modelos de empleados incompatibles. ¿Qué enfoque reduce mejor el acoplamiento con el modelo heredado?",
+        o: ["Incorporar las estructuras heredadas como entidades centrales del sistema nuevo", "Crear una capa anticorrupción que traduzca entre ambos modelos", "Permitir que ambos sistemas actualicen directamente las mismas tablas", "Duplicar las reglas heredadas en todos los módulos nuevos"], a: 1
+      },
+      {
+        q: "En un sistema de atención médica, el proceso “Autorizar cirugía” incluye evaluación clínica, validación de cobertura y disponibilidad de quirófano. Estas actividades pueden ejecutarse en paralelo, pero todas deben concluir antes de programar la cirugía. ¿Cómo se representa correctamente en un diagrama de actividades?",
+        o: ["Con un nodo de decisión seguido de tres flujos excluyentes", "Con una bifurcación y una posterior sincronización", "Con tres estados finales independientes", "Con una relación de generalización entre actividades"], a: 1
+      },
+      {
+        q: "Una aplicación debe mostrar precios en distintas monedas. Las tasas provienen de un servicio externo que puede estar temporalmente indisponible. El negocio acepta tasas con hasta 30 minutos de antigüedad. ¿Qué diseño equilibra mejor disponibilidad y precisión?",
+        o: ["Detener todas las ventas cuando falle el servicio externo", "Mantener una caché con vigencia controlada y registrar la fuente de la tasa", "Fijar permanentemente la última tasa obtenida", "Consultar el servicio externo por cada elemento mostrado en pantalla"], a: 1
+      },
+      {
+        q: "En una revisión del modelo de dominio, la clase Cliente contiene métodos para validar crédito, generar facturas, enviar correos y producir reportes estadísticos. ¿Qué problema de diseño se observa principalmente?",
+        o: ["Incumplimiento de sustitución", "Falta de encapsulamiento de atributos", "Baja cohesión por acumulación de responsabilidades", "Uso excesivo de composición"], a: 2
+      },
+      {
+        q: "Un marketplace necesita registrar pedidos aunque el servicio de inventario esté temporalmente fuera de línea. Sin embargo, no debe prometer existencias hasta obtener confirmación. ¿Qué flujo representa mejor el requisito?",
+        o: ["Crear el pedido como pendiente y confirmar o compensar tras procesar la reserva", "Confirmar siempre el pedido y corregir manualmente el inventario después", "Bloquear indefinidamente la solicitud hasta recuperar inventario", "Copiar el inventario completo en el cliente antes de crear el pedido"], a: 0
+      },
+      {
+        q: "En un sistema de bibliotecas, el análisis distingue entre Libro, que representa una obra y su ISBN, y Ejemplar, que representa cada copia física disponible. ¿Qué cardinalidad modela mejor la relación?",
+        o: ["Cada Libro se relaciona exactamente con un Ejemplar", "Cada Ejemplar puede corresponder a varios Libros simultáneamente", "Un Libro puede tener varios Ejemplares y cada Ejemplar pertenece a un solo Libro", "Libro y Ejemplar no requieren asociación porque comparten información"], a: 2
+      },
+      {
+        q: "Una plataforma de videoconferencias establece que, si un nodo regional falla, las sesiones activas deben recuperarse en otra región en menos de 60 segundos y perder como máximo cinco segundos de información. ¿Qué atributos deben analizarse prioritariamente?",
+        o: ["Usabilidad e internacionalización", "Recuperabilidad y tolerancia a fallos", "Portabilidad y mantenibilidad", "Interoperabilidad y accesibilidad"], a: 1
+      },
+      {
+        q: "Un equipo debe decidir entre arquitectura monolítica modular y microservicios para un producto nuevo. El dominio aún cambia con frecuencia, el equipo está formado por seis personas y no existen necesidades independientes de escalamiento. ¿Qué decisión está mejor sustentada?",
+        o: ["Adoptar microservicios para cada entidad del modelo de datos", "Iniciar con un monolito modular y límites internos bien definidos", "Crear un servicio por cada pantalla de la aplicación", "Distribuir desde el inicio todas las transacciones entre varios servicios"], a: 1
+      },
+      {
+        q: "Un requisito señala: “Solo los supervisores pueden aprobar reembolsos mayores a $10 000; los analistas pueden prepararlos, pero quien prepara un reembolso no puede aprobarlo”. ¿Qué modelo captura mejor la combinación de reglas?",
+        o: ["Control de acceso por roles con restricción de separación de funciones", "Permisos idénticos para todos los usuarios autenticados", "Control de acceso basado únicamente en la dirección IP", "Una lista estática de usuarios dentro del código de la interfaz"], a: 0
+      },
+      {
+        q: "En un sistema de pedidos, la interfaz IPedidoRepositorio define veinte operaciones, pero el módulo de consultas solo requiere buscar pedidos por identificador y fecha. ¿Qué modificación mejora el diseño?",
+        o: ["Obligar al módulo a implementar métodos vacíos", "Dividir la interfaz en contratos más específicos según sus consumidores", "Convertir todas las operaciones en métodos estáticos", "Exponer directamente la conexión a la base de datos"], a: 1
+      },
+      {
+        q: "Una empresa necesita auditar cada modificación hecha a los límites de crédito, incluyendo valor anterior, valor nuevo, usuario, fecha y motivo. ¿Qué decisión debe incorporarse al diseño?",
+        o: ["Sobrescribir el registro y conservar únicamente el valor vigente", "Registrar cambios inmutables vinculados con la identidad del actor", "Guardar el motivo en archivos locales de cada usuario", "Reconstruir la auditoría a partir de capturas de pantalla"], a: 1
+      },
+      {
+        q: "En el análisis de un portal ciudadano aparecen dos necesidades: consultar trámites debe estar disponible el 99.9 % del tiempo, mientras actualizar datos puede suspenderse durante mantenimiento. ¿Qué decisión arquitectónica responde mejor a esta diferencia?",
+        o: ["Aplicar el mismo nivel de disponibilidad a todas las funciones sin análisis adicional", "Separar las capacidades para desplegarlas y escalarlas conforme a sus requisitos", "Almacenar consultas y actualizaciones únicamente en la interfaz web", "Ejecutar todas las funciones dentro de una sola transacción global"], a: 1
+      },
+      {
+        q: "Un sistema de control escolar debe calcular promedios. Algunas carreras usan promedio simple, otras ponderado por créditos y otras eliminan la calificación más baja. Las reglas se seleccionan según el plan académico. ¿Qué diseño facilita agregar nuevos cálculos?",
+        o: ["Una cadena creciente de condicionales dentro de la clase Alumno", "Estrategias de cálculo intercambiables seleccionadas por el plan", "Una copia del módulo completo para cada carrera", "Un método privado distinto dentro de cada pantalla"], a: 1
+      },
+      {
+        q: "Durante una entrevista, un usuario solicita que el sistema “nunca permita pedidos incorrectos”. ¿Qué técnica ayuda mejor a convertir esta expectativa en requisitos analizables?",
+        o: ["Pedir ejemplos, excepciones, reglas de negocio y criterios de aceptación", "Registrar literalmente la frase y evitar interpretaciones", "Elegir las validaciones después de liberar el sistema", "Definir “incorrecto” únicamente con base en el esquema de la base de datos"], a: 0
+      },
+      {
+        q: "Un proceso de contratación cambia según el tipo de vacante. Todas requieren registro y entrevista; las vacantes técnicas agregan una prueba de programación y las directivas agregan una evaluación del consejo. ¿Qué modelo permite expresar claramente las variantes del flujo?",
+        o: ["Un diagrama de actividades con decisiones y condiciones de guarda", "Un diagrama de despliegue con servidores especializados", "Un diagrama de clases sin operaciones", "Un diagrama de paquetes con dependencias circulares"], a: 0
+      },
+      {
+        q: "En un sistema distribuido, el servicio de facturación recibe dos veces el mismo evento “PedidoPagado” debido a un reintento del intermediario. ¿Qué propiedad debe tener el procesamiento para evitar facturas duplicadas?",
+        o: ["Idempotencia basada en un identificador único del evento", "Recursividad para repetir la operación completa", "Paralelismo sin persistencia del estado procesado", "Acoplamiento síncrono con la interfaz del usuario"], a: 0
+      },
+      {
+        q: "Una empresa solicita que los reportes históricos no afecten el rendimiento de las operaciones transaccionales. Los reportes toleran algunos minutos de retraso. ¿Qué diseño satisface mejor ambas necesidades?",
+        o: ["Ejecutar consultas analíticas complejas sobre la base transaccional en horas pico", "Mantener un modelo de lectura actualizado de manera asíncrona", "Generar todos los reportes dentro de la transacción de venta", "Bloquear las operaciones mientras se calcula cada indicador"], a: 1
+      },
+      {
+        q: "En un diagrama de secuencia, la interfaz de usuario crea directamente conexiones de base de datos, valida reglas comerciales y actualiza inventario. ¿Qué redistribución mejora la separación de responsabilidades?",
+        o: ["Mantener toda la lógica en la interfaz para reducir el número de clases", "Delegar la coordinación a un servicio de aplicación y las reglas al dominio", "Trasladar las reglas comerciales a procedimientos visuales del cliente", "Permitir que la base de datos controle también la navegación de pantallas"], a: 1
+      },
+      {
+        q: "Una institución requiere intercambiar información con cinco organismos. Cada uno usa códigos distintos para representar estados civiles, municipios y tipos de documento. ¿Qué decisión reduce el impacto de estas diferencias sobre el dominio?",
+        o: ["Adoptar internamente el formato del organismo que envía más datos", "Crear traductores entre cada contrato externo y un modelo canónico interno", "Incorporar todos los códigos externos en cada entidad del dominio", "Permitir que los usuarios corrijan manualmente las incompatibilidades"], a: 1
+      },
+      {
+        q: "Una aplicación móvil permite capturar inspecciones sin conexión. Al recuperar conectividad, dos inspectores pueden haber modificado el mismo registro. ¿Qué aspecto debe definirse explícitamente durante el diseño?",
+        o: ["Una política de detección y resolución de conflictos de sincronización", "Un aumento del tamaño de fuente de la interfaz", "Una relación de herencia entre Inspector e Inspección", "Un único identificador compartido por todos los dispositivos"], a: 0
+      },
+      {
+        q: "El equipo analiza el caso de uso “Cancelar reservación”. La cancelación es válida solo antes de la hora límite; puede generar penalización según la tarifa y debe liberar el recurso reservado. ¿Cuál conjunto de elementos produce una especificación más completa?",
+        o: ["Actor principal, precondiciones, flujo principal, alternativas, reglas y postcondiciones", "Nombre del caso de uso y una captura de la pantalla final", "Lista de tablas afectadas y lenguaje de programación", "Únicamente el flujo exitoso descrito por el desarrollador"], a: 0
+      },
+      {
+        q: "Un componente de notificaciones debe enviar mensajes por correo, SMS o mensajería instantánea. El caso de uso solo debe solicitar el envío, sin conocer la tecnología ni el proveedor elegido. ¿Qué principio guía mejor el diseño?",
+        o: ["Depender de una abstracción de notificación e inyectar la implementación", "Instanciar todos los proveedores directamente dentro del caso de uso", "Compartir variables globales entre los canales disponibles", "Heredar el caso de uso desde cada biblioteca externa"], a: 0
+      },
+      {
+        q: "Antes de aprobar la arquitectura de una plataforma financiera, el equipo debe comprobar cómo responderá ante picos de carga, caída del proveedor de identidad y retrasos en la replicación. ¿Qué actividad aporta la evidencia más útil?",
+        o: ["Revisar únicamente que los diagramas utilicen la notación UML correcta", "Ejecutar escenarios de atributos de calidad mediante prototipos y pruebas de arquitectura", "Contar el número de clases definidas en cada componente", "Posponer la evaluación hasta que todo el sistema esté implementado"], a: 1
+      },
+      {
+        q: "Considere el siguiente código. ¿Cuál es la complejidad temporal de procesar para una entrada de tamaño n?",
+        code: "def procesar(datos):\n    total = 0\n    i = 1\n    while i < len(datos):\n        for j in range(i):\n            total += datos[j]\n        i *= 2\n    return total",
+        o: ["O(log n)", "O(n)", "O(n log n)", "O(n²)"], a: 1
+      },
+      {
+        q: "Un desarrollador implementa la siguiente búsqueda binaria. En determinadas entradas, el ciclo no termina. ¿Qué modificación corrige el problema sin cambiar la complejidad esperada?",
+        code: "while (izquierda <= derecha) {\n    int medio = (izquierda + derecha) / 2;\n\n    if (datos[medio] == objetivo)\n        return medio;\n    else if (datos[medio] < objetivo)\n        izquierda = medio;\n    else\n        derecha = medio - 1;\n}",
+        o: ["Sustituir izquierda = medio por izquierda = medio + 1", "Sustituir derecha = medio - 1 por derecha = medio", "Calcular medio como (derecha - izquierda) / 2", "Cambiar la condición por izquierda < derecha - 1"], a: 0
+      },
+      {
+        q: "Un servicio de caché debe recuperar valores y actualizar el orden de uso en tiempo constante. Cuando alcanza su capacidad, debe eliminar el elemento utilizado hace más tiempo. ¿Qué combinación de estructuras satisface mejor estos requisitos?",
+        o: ["Una tabla hash y una lista doblemente enlazada", "Una pila y un arreglo ordenado", "Una cola simple y un árbol binario de búsqueda", "Una lista simplemente enlazada y una cola de prioridad"], a: 0
+      },
+      {
+        q: "Una aplicación procesa millones de transacciones mediante la siguiente secuencia: descartar las canceladas, transformar cada transacción válida en su importe neto y acumular el total. ¿Qué composición representa mejor un enfoque funcional sin modificar la colección original?",
+        o: ["filter, seguido de map y reduce", "reduce, seguido de sort y filter", "map, seguido de push y delete", "forEach, seguido de asignaciones sobre cada elemento original"], a: 0
+      },
+      {
+        q: "Dos hilos ejecutan simultáneamente el siguiente método sobre la misma instancia. Después de 100 000 invocaciones por hilo, el valor suele ser menor que 200 000. ¿Qué cambio resuelve directamente la causa del resultado?",
+        code: "void incrementar() {\n    contador++;\n}",
+        o: ["Declarar contador como constante", "Utilizar una operación atómica de incremento o protegerla con exclusión mutua", "Aumentar la prioridad de ambos hilos", "Insertar una pausa después de cada incremento"], a: 1
+      },
+      {
+        q: "Una clase crea directamente su repositorio. Las pruebas unitarias requieren sustituir el acceso real a la base de datos por una implementación controlada. ¿Qué refactorización facilita mejor esta sustitución?",
+        code: "class ServicioPedidos {\n    private readonly RepositorioSql repositorio = new RepositorioSql();\n}",
+        o: ["Recibir una abstracción de repositorio mediante el constructor", "Convertir RepositorioSql en una variable global", "Hacer públicos todos los atributos del repositorio", "Crear una nueva conexión dentro de cada método del servicio"], a: 0
+      },
+      {
+        q: "Un sistema de compilación representa módulos como vértices y dependencias como aristas dirigidas. Antes de compilar debe obtener un orden válido y rechazar configuraciones con dependencias circulares. ¿Qué algoritmo es el más adecuado?",
+        o: ["Ordenamiento topológico con detección de ciclos", "Búsqueda binaria sobre la lista de módulos", "Algoritmo de Prim con cola de prioridad", "Recorrido en anchura sin registrar grados ni estados"], a: 0
+      },
+      {
+        q: "Un servicio recibe números continuamente y debe informar la mediana después de cada inserción, sin conservar los elementos en una colección ordenada completa. ¿Qué diseño ofrece un costo eficiente por actualización?",
+        o: ["Un max-heap para la mitad inferior y un min-heap para la mitad superior", "Una pila para los valores pares y una cola para los impares", "Una tabla hash que almacene únicamente las frecuencias totales", "Una lista enlazada sin ordenar recorrida completamente tras cada inserción"], a: 0
+      },
+      {
+        q: "Una plataforma procesa n puntuaciones y necesita conservar únicamente las k más altas, donde k es mucho menor que n. ¿Qué estrategia utiliza mejor la memoria y el tiempo?",
+        o: ["Ordenar las n puntuaciones y tomar las últimas k", "Mantener un min-heap de tamaño máximo k", "Insertar todas las puntuaciones en una pila", "Mantener un max-heap con los n elementos y no eliminar ninguno"], a: 1
+      },
+      {
+        q: "Dos operaciones asíncronas independientes tardan aproximadamente tres y cuatro segundos. ¿Cuál modificación reduce el tiempo total sin introducir una dependencia inexistente entre ambas operaciones?",
+        code: "const perfil = await obtenerPerfil();\nconst permisos = await obtenerPermisos();",
+        o: ["Ejecutarlas mediante Promise.all y esperar ambos resultados", "Agregar un segundo await a cada operación", "Convertir ambas funciones en síncronas", "Ejecutar obtenerPermisos dentro de un ciclo de espera"], a: 0
+      },
+      {
+        q: "Una red vial se modela como un grafo disperso con pesos no negativos. El sistema debe encontrar la ruta de menor costo desde un origen hacia todos los destinos. ¿Qué implementación ofrece una solución adecuada?",
+        o: ["Dijkstra con lista de adyacencia y cola de prioridad", "Búsqueda en profundidad con una pila y sin relajación", "Ordenamiento topológico aplicado directamente al grafo vial", "Búsqueda binaria sobre los pesos de las aristas"], a: 0
+      },
+      {
+        q: "Una API almacena identificadores proporcionados por usuarios en una tabla hash. Un atacante genera numerosos identificadores que producen colisiones, degradando el rendimiento de las consultas. ¿Qué medida aborda mejor este riesgo?",
+        o: ["Utilizar una función hash con aleatorización y controlar el factor de carga", "Reducir la tabla a una sola posición para centralizar las búsquedas", "Reemplazar todos los identificadores por su longitud", "Desactivar el redimensionamiento y conservar todas las colisiones en una lista"], a: 0
+      },
+      {
+        q: "El siguiente código construye un texto a partir de n fragmentos, usando cadenas inmutables. Si los fragmentos tienen tamaño comparable, ¿qué cambio evita el costo cuadrático provocado por las copias repetidas?",
+        code: "String resultado = \"\";\nfor (String fragmento : fragmentos) {\n    resultado = resultado + fragmento;\n}",
+        o: ["Utilizar un acumulador mutable, como StringBuilder", "Convertir cada fragmento en una cadena nueva antes de concatenarlo", "Ejecutar el ciclo dos veces para reservar espacio implícitamente", "Guardar resultado en una variable global"], a: 0
+      },
+      {
+        q: "Un algoritmo recursivo calcula el costo mínimo de recorrer una matriz, pero vuelve a resolver las mismas posiciones miles de veces. ¿Qué modificación conserva el planteamiento y reduce el trabajo repetido?",
+        o: ["Memorizar el resultado de cada estado definido por sus coordenadas", "Recalcular cada ruta desde el origen después de visitar una celda", "Sustituir la matriz por una lista enlazada sin almacenar resultados", "Elegir siempre la celda inmediata de menor costo sin considerar estados futuros"], a: 0
+      },
+      {
+        q: "Un sistema calcula el precio de envío mediante implementaciones distintas. El servicio recibe una implementación de CalculadorEnvio según el tipo de entrega. ¿Qué beneficio principal aporta este diseño?",
+        code: "interface CalculadorEnvio {\n    decimal calcular(Pedido pedido);\n}",
+        o: ["Permite cambiar el algoritmo mediante polimorfismo sin modificar el servicio consumidor", "Garantiza que todos los algoritmos tengan el mismo código interno", "Evita la creación de objetos durante la ejecución", "Elimina la necesidad de probar cada estrategia por separado"], a: 0
+      },
+      {
+        q: "Un árbol puede degenerarse hasta contener un millón de nodos en una sola rama. La implementación actual utiliza una llamada recursiva por nodo y provoca desbordamiento de pila. ¿Qué alternativa conserva el recorrido completo con mayor seguridad?",
+        o: ["Implementar el recorrido iterativamente con una pila explícita", "Duplicar el límite de recursión después de procesar cada nodo", "Guardar todos los nodos en variables locales de la misma llamada", "Ejecutar dos llamadas recursivas adicionales por cada nodo"], a: 0
+      },
+      {
+        q: "Una implementación de quicksort elige siempre el primer elemento como pivote. En producción recibe con frecuencia arreglos ya ordenados. ¿Qué comportamiento debe esperar el equipo y qué ajuste lo mitiga?",
+        o: ["Tiempo O(n²); elegir el pivote aleatoriamente o mediante una estrategia más equilibrada", "Tiempo O(log n); eliminar la fase de partición", "Tiempo O(n); utilizar siempre el último elemento como pivote", "Tiempo O(n log n) garantizado; no se requiere ningún ajuste"], a: 0
+      },
+      {
+        q: "Varios productores generan trabajos más rápido de lo que los consumidores pueden procesarlos. El sistema no debe perder trabajos ni permitir que el consumo de memoria crezca sin límite. ¿Qué mecanismo es el más adecuado?",
+        o: ["Una cola bloqueante con capacidad limitada y control de presión", "Una pila global sin límite ni sincronización", "Un arreglo distinto por productor que nunca se vacíe", "Una lista enlazada ilimitada con espera activa en los consumidores"], a: 0
+      },
+      {
+        q: "Dos solicitudes intentan reservar al mismo tiempo el último asiento disponible. Ambas leen disponibilidad igual a uno y crean una reservación. ¿Qué implementación protege mejor la invariancia sin depender de una validación posterior manual?",
+        o: ["Una actualización atómica condicionada por disponibilidad dentro de una transacción", "Una consulta adicional desde la interfaz antes de mostrar el botón", "Una variable de JavaScript almacenada en cada navegador", "Un retraso aleatorio antes de insertar cada reservación"], a: 0
+      },
+      {
+        q: "Una tabla contiene millones de pedidos y dispone de un índice compuesto por (cliente_id, fecha_creacion). ¿Qué consulta aprovecha mejor el orden de ese índice?",
+        o: ["Pedidos de un cliente específico dentro de un intervalo de fechas", "Pedidos de cualquier cliente filtrados únicamente por el total", "Pedidos filtrados solo por el último carácter del estado", "Pedidos ordenados exclusivamente por una columna no indexada"], a: 0
+      },
+      {
+        q: "Una implementación de singleton usa verificación doble en un entorno con múltiples hilos, pero la referencia compartida no tiene garantías de visibilidad. Ocasionalmente, otro hilo observa una instancia parcialmente inicializada. ¿Qué corrección resulta más adecuada?",
+        o: ["Aplicar el mecanismo de publicación segura definido por el lenguaje o usar inicialización estática", "Agregar una segunda instancia para comparar sus atributos", "Eliminar toda sincronización y confiar en el planificador", "Inicializar el singleton desde cada método que lo utilice"], a: 0
+      },
+      {
+        q: "Una operación asíncrona abre un archivo, invoca un servicio remoto y puede cancelarse mientras espera la respuesta. ¿Qué diseño maneja correctamente la cancelación y los recursos?",
+        o: ["Propagar una señal de cancelación y liberar el archivo en un bloque de finalización", "Ignorar la cancelación hasta que termine toda la aplicación", "Finalizar abruptamente el hilo sin ejecutar limpieza", "Mantener el archivo abierto para reutilizarlo en cualquier solicitud futura"], a: 0
+      },
+      {
+        q: "Una aplicación debe procesar un archivo de 80 GB, línea por línea, en un equipo con 8 GB de memoria. ¿Qué enfoque es más apropiado?",
+        o: ["Utilizar un iterador o generador que produzca una línea a la vez", "Cargar todas las líneas en una lista antes de iniciar el procesamiento", "Duplicar el contenido del archivo en dos arreglos", "Convertir primero todo el archivo en una única cadena"], a: 0
+      },
+      {
+        q: "Una aplicación funcional mantiene múltiples versiones de una colección inmutable después de pequeñas modificaciones. Copiar la colección completa en cada versión consume demasiada memoria. ¿Qué técnica reduce ese costo sin perder inmutabilidad?",
+        o: ["Compartición estructural entre las versiones de la colección", "Uso de variables globales mutables para todas las versiones", "Serialización completa después de cada lectura", "Eliminación inmediata de las versiones anteriores antes de crearlas"], a: 0
+      },
+      {
+        q: "Un proceso distribuido aplica una operación parcial en varios nodos y después combina los resultados. El equipo quiere ejecutar las combinaciones en cualquier orden sin alterar el resultado final. ¿Qué propiedad debe tener la operación de combinación?",
+        o: ["Ser asociativa y, si el orden puede variar, también conmutativa", "Depender del reloj local de cada nodo", "Modificar una variable global no sincronizada", "Producir un resultado distinto en cada invocación"], a: 0
+      },
+      {
+        q: "Un sistema incorpora conexiones entre componentes y debe responder repetidamente si dos componentes pertenecen al mismo grupo conectado. No necesita eliminar conexiones. ¿Qué estructura resulta más eficiente?",
+        o: ["Conjuntos disjuntos con compresión de caminos y unión por rango", "Una pila independiente para cada consulta", "Una matriz ordenada nuevamente después de cada búsqueda", "Un árbol binario que almacene únicamente el orden de inserción"], a: 0
+      },
+      {
+        q: "Una aplicación utiliza un filtro de Bloom antes de consultar una base de datos remota. El filtro indica que un identificador probablemente existe. ¿Qué debe hacer la aplicación para conservar la exactitud?",
+        o: ["Consultar la base de datos porque el filtro puede producir falsos positivos", "Afirmar que el identificador existe sin realizar otra comprobación", "Eliminar el identificador porque el filtro produce falsos negativos obligatorios", "Reconstruir toda la base de datos antes de responder"], a: 0
+      },
+      {
+        q: "Un robot se mueve en una cuadrícula donde cada desplazamiento válido tiene el mismo costo. Debe encontrar el camino con el menor número de movimientos evitando obstáculos. ¿Qué algoritmo garantiza el resultado con menor complejidad conceptual?",
+        o: ["Búsqueda en anchura desde la posición inicial", "Búsqueda en profundidad deteniéndose en la primera salida encontrada", "Ordenamiento quicksort de todas las celdas", "Recorrido en preorden de un árbol construido sin considerar vecinos"], a: 0
+      },
+      {
+        q: "El siguiente código crea funciones dentro de un ciclo. Al ejecutar las tres funciones después del ciclo, todas devuelven 3. ¿Qué cambio hace que devuelvan 0, 1 y 2, respectivamente?",
+        code: "const funciones = [];\n\nfor (var i = 0; i < 3; i++) {\n    funciones.push(() => i);\n}",
+        o: ["Declarar el contador con let para crear un enlace por iteración", "Cambiar i++ por ++i", "Declarar funciones con var", "Ejecutar el ciclo una cuarta vez"], a: 0
+      },
+      {
+        q: "Dos transacciones leen el mismo saldo, calculan valores nuevos y escriben sus resultados. La segunda escritura sobrescribe la primera, ocasionando una actualización perdida. ¿Qué mecanismo controla mejor este escenario?",
+        o: ["Bloqueo apropiado o control optimista mediante una columna de versión", "Caché permanente del saldo en la interfaz de usuario", "Ejecución de ambas transacciones con menor prioridad", "Eliminación de la validación del saldo antes de escribir"], a: 0
+      },
+      {
+        q: "Dos implementaciones recorren diez millones de enteros. Una usa un arreglo contiguo y otra una lista enlazada; ambas tienen complejidad O(n), pero el arreglo es considerablemente más rápido. ¿Qué factor explica mejor la diferencia?",
+        o: ["La localidad de memoria y el aprovechamiento de las líneas de caché", "La lista enlazada reduce automáticamente el número de elementos", "El arreglo cambia la complejidad asintótica a O(1)", "La lista enlazada ordena sus elementos durante cada recorrido"], a: 0
+      },
+      {
+        q: "Un buscador debe devolver sugerencias para un prefijo mientras el usuario escribe. El catálogo contiene millones de palabras y se realizan muchas consultas de prefijos. ¿Qué estructura está especialmente diseñada para este uso?",
+        o: ["Un trie o árbol de prefijos", "Una pila LIFO", "Una cola circular sin índices", "Una lista enlazada ordenada por longitud"], a: 0
+      },
+      {
+        q: "El equipo desea probar una función de ordenamiento con miles de entradas generadas automáticamente. En vez de verificar un resultado fijo para cada entrada, quiere validar propiedades generales. ¿Cuál es una propiedad adecuada?",
+        o: ["La salida está ordenada y conserva el mismo multiconjunto de elementos que la entrada", "La salida siempre comienza con el primer elemento recibido", "La función tarda exactamente el mismo tiempo para cualquier entrada", "La salida ocupa una dirección de memoria específica"], a: 0
+      },
+      {
+        q: "Una lista simplemente enlazada puede contener accidentalmente un ciclo. El sistema debe detectarlo utilizando memoria adicional constante. ¿Qué técnica satisface el requisito?",
+        o: ["Dos punteros que avanzan a velocidades diferentes", "Una tabla hash con todos los nodos visitados", "Copiar la lista completa en un arreglo", "Ordenar los nodos por su dirección de memoria"], a: 0
+      },
+      {
+        q: "Analice el siguiente código. ¿Cuál es su complejidad temporal en función de n?",
+        code: "for (int i = 1; i <= n; i *= 2) {\n    for (int j = 0; j < n; j++) {\n        ejecutar(i, j);\n    }\n}",
+        o: ["O(log n)", "O(n)", "O(n log n)", "O(n²)"], a: 2
+      },
+      {
+        q: "Una tabla Pedido almacena id_pedido, fecha, id_cliente, nombre_cliente y ciudad_cliente. id_pedido es la clave y los datos del cliente dependen de id_cliente. ¿Qué modificación lleva el diseño a tercera forma normal?",
+        o: ["Conservar una sola tabla y agregar un índice sobre nombre_cliente", "Separar Cliente(id_cliente, nombre_cliente, ciudad_cliente) y mantener id_cliente como referencia en Pedido", "Eliminar id_cliente y utilizar nombre_cliente como clave del pedido", "Duplicar los datos del cliente en una tabla por cada ciudad"], a: 1
+      },
+      {
+        q: "En la relación Inscripción(alumno, curso, profesor, salón), cada curso determina un profesor y un salón, mientras que un alumno puede inscribirse en varios cursos. ¿Cuál es la clave candidata mínima para identificar una inscripción?",
+        o: ["alumno", "curso", "(alumno, curso)", "(profesor, salón)"], a: 2
+      },
+      {
+        q: "Una empresa necesita obtener los tres salarios más altos de cada departamento, conservando los empates de forma controlada. ¿Qué enfoque SQL es el más adecuado?",
+        code: "SELECT departamento_id, empleado_id, salario\nFROM (\n  SELECT e.*,\n         DENSE_RANK() OVER (PARTITION BY departamento_id ORDER BY salario DESC) AS posicion\n  FROM empleado e\n) x\nWHERE posicion <= 3;",
+        o: ["Utilizar una función de ventana particionada por departamento", "Aplicar LIMIT 3 una sola vez al resultado global", "Agrupar únicamente por departamento y seleccionar empleado_id sin agregación", "Ordenar alfabéticamente los departamentos antes de calcular salarios"], a: 0
+      },
+      {
+        q: "Una transacción consulta dos veces todos los pedidos con total superior a $10 000. Entre ambas consultas, otra transacción inserta un pedido que cumple la condición y aparece en la segunda lectura. ¿Qué nivel de aislamiento evita este fenómeno?",
+        o: ["Lectura no confirmada", "Lectura confirmada", "Lectura repetible sin protección de rangos", "Serializable"], a: 3
+      },
+      {
+        q: "La consulta más frecuente filtra por cliente y por un intervalo de fechas, y ordena cronológicamente los resultados. ¿Qué índice compuesto es el más útil?",
+        code: "SELECT id_pedido, fecha, total\nFROM pedido\nWHERE cliente_id = ?\n  AND fecha BETWEEN ? AND ?\nORDER BY fecha;",
+        o: ["(fecha, total, estado)", "(cliente_id, fecha)", "(total, cliente_id)", "(id_pedido, estado)"], a: 1
+      },
+      {
+        q: "Una consulta no utiliza el índice existente sobre fecha_creacion porque aplica una función sobre la columna. ¿Qué reescritura permite una búsqueda sargable para el año 2026?",
+        code: "SELECT * FROM evento\nWHERE YEAR(fecha_creacion) = 2026;",
+        o: ["WHERE CAST(fecha_creacion AS VARCHAR) LIKE '%2026%'", "WHERE YEAR(fecha_creacion + 0) = 2026", "WHERE fecha_creacion >= '2026-01-01' AND fecha_creacion < '2027-01-01'", "WHERE fecha_creacion IS NOT NULL ORDER BY YEAR(fecha_creacion)"], a: 2
+      },
+      {
+        q: "Dos transacciones actualizan las tablas Cuenta y Movimiento en orden inverso y generan interbloqueos frecuentes. ¿Qué medida preventiva reduce directamente este riesgo?",
+        o: ["Adquirir los bloqueos sobre recursos compartidos en un orden global consistente", "Aumentar indefinidamente el tiempo de espera de cada transacción", "Desactivar el registro de transacciones", "Ejecutar cada sentencia con una conexión nueva y sin confirmar"], a: 0
+      },
+      {
+        q: "Una plataforma multiinquilino debe distribuir millones de clientes entre nodos, conservar juntos los datos de cada cliente y agregar nodos gradualmente. ¿Qué estrategia de particionamiento horizontal resulta apropiada?",
+        o: ["Particionar cada tabla por el nombre de la primera columna", "Replicar todos los registros completos en cada nodo", "Asignar manualmente cada fila sin una clave estable", "Aplicar hash consistente sobre el identificador del inquilino"], a: 3
+      },
+      {
+        q: "Una aplicación escribe en una base primaria y lee de réplicas asíncronas. Un usuario actualiza su perfil y enseguida observa la versión anterior. ¿Qué solución proporciona consistencia de lectura después de escritura para esa sesión?",
+        o: ["Enviar todas las escrituras a una réplica elegida aleatoriamente", "Dirigir temporalmente las lecturas de la sesión a la primaria o esperar a que la réplica alcance la posición confirmada", "Aumentar el tiempo de vida de la caché del perfil", "Eliminar el identificador de versión de las actualizaciones"], a: 1
+      },
+      {
+        q: "Un catálogo distribuido debe continuar aceptando operaciones durante una partición de red y el negocio tolera que distintas regiones converjan después. ¿Qué decisión refleja este requisito?",
+        o: ["Priorizar consistencia fuerte y detener todas las regiones", "Eliminar la replicación para evitar versiones distintas", "Priorizar disponibilidad durante la partición y resolver la consistencia de manera eventual", "Garantizar simultáneamente consistencia fuerte y disponibilidad sin restricciones"], a: 2
+      },
+      {
+        q: "Un sistema antifraude necesita recorrer rápidamente relaciones entre cuentas, dispositivos, direcciones IP y comercios para detectar rutas y comunidades sospechosas. ¿Qué modelo de base de datos se ajusta mejor?",
+        o: ["Base de datos de grafos", "Almacén de series temporales sin relaciones", "Archivo plano ordenado por fecha", "Base clave-valor que no permita recorrer conexiones"], a: 0
+      },
+      {
+        q: "En una base documental, una orden contiene como máximo veinte partidas, las partidas siempre se consultan con la orden y no se comparten entre documentos. ¿Qué modelado favorece la lectura atómica?",
+        o: ["Guardar cada atributo de la partida en una base distinta", "Crear una colección independiente por cada orden", "Duplicar la orden completa dentro de cada partida", "Incrustar las partidas como un arreglo dentro del documento de la orden"], a: 3
+      },
+      {
+        q: "Un consumidor puede recibir varias veces el mismo evento de pago debido a la semántica de entrega al menos una vez. ¿Qué mecanismo evita registrar el cobro repetido?",
+        o: ["Procesar cada mensaje sin conservar identificadores", "Usar una clave de idempotencia y una restricción única dentro de la transacción", "Desactivar los reintentos aunque se pierdan mensajes", "Ordenar los eventos por tamaño antes de insertarlos"], a: 1
+      },
+      {
+        q: "El negocio exige un RPO máximo de 15 minutos y un RTO de una hora para una base transaccional. ¿Qué estrategia satisface mejor ambos objetivos?",
+        o: ["Realizar una copia completa una vez al mes y restaurarla manualmente", "Conservar únicamente una réplica en el mismo servidor físico", "Combinar respaldos frecuentes o envío de registros con restauración automatizada y pruebas periódicas", "Exportar capturas de pantalla de las tablas al final del día"], a: 2
+      },
+      {
+        q: "Se asigna la subred IPv4 192.168.10.64/26 a un laboratorio. ¿Cuántas direcciones pueden asignarse normalmente a dispositivos?",
+        o: ["62", "64", "126", "254"], a: 0
+      },
+      {
+        q: "Una organización dispone de 192.168.20.0/24 y necesita redes para 100, 50 y 20 hosts, minimizando desperdicio. ¿Qué plan VLSM es válido?",
+        o: ["Asignar /28, /29 y /30 en cualquier orden", "Asignar tres redes /26 comenzando por la más pequeña", "Asignar /24 a cada segmento", "Asignar primero /25, después /26 y finalmente /27, sin superponer rangos"], a: 3
+      },
+      {
+        q: "Una red IPv6 quiere que los equipos generen automáticamente su dirección global a partir de los anuncios del router, sin mantener asignaciones en un servidor. ¿Qué mecanismo debe utilizar?",
+        o: ["NAT44", "SLAAC mediante Router Advertisements", "ARP dinámico", "DHCPv4 con retransmisión"], a: 1
+      },
+      {
+        q: "Un enlace entre un conmutador y un punto de acceso debe transportar simultáneamente tráfico de empleados, invitados y dispositivos IoT en VLAN diferentes. ¿Cómo debe configurarse?",
+        o: ["Como puerto de acceso sin etiquetado para todas las VLAN", "Como enlace agregado que descarte identificadores de VLAN", "Como troncal IEEE 802.1Q con las VLAN autorizadas", "Como conexión de capa física separada por cada dirección IP"], a: 2
+      },
+      {
+        q: "Dos conmutadores tienen enlaces redundantes de capa 2 y la red experimenta tormentas de broadcast y aprendizaje inestable de direcciones MAC. ¿Qué protocolo debe controlar la topología?",
+        o: ["Rapid Spanning Tree Protocol", "Border Gateway Protocol", "Network Time Protocol", "Simple Mail Transfer Protocol"], a: 0
+      },
+      {
+        q: "Dos proveedores de internet deben intercambiar prefijos y aplicar políticas de enrutamiento entre sistemas autónomos. ¿Qué protocolo corresponde al escenario?",
+        o: ["RIP versión 1", "ARP", "OSPF dentro de una sola área local", "BGP"], a: 3
+      },
+      {
+        q: "Una aplicación de videoconferencia prioriza baja latencia y puede tolerar la pérdida ocasional de paquetes; además, implementa recuperación selectiva en la aplicación. ¿Qué transporte base es el más conveniente?",
+        o: ["TCP con retransmisión obligatoria de cada segmento antes de continuar", "UDP", "ICMP como canal de datos de usuario", "ARP sobre internet"], a: 1
+      },
+      {
+        q: "Un cliente TLS recibe un certificado presentado por un servidor. ¿Qué validación es indispensable para prevenir una suplantación mediante un certificado no autorizado?",
+        o: ["Comprobar únicamente que la clave pública tenga muchos bits", "Aceptar cualquier certificado si la conexión está cifrada", "Validar la cadena de confianza, vigencia y coincidencia del nombre del servidor", "Comparar el certificado con la dirección MAC local"], a: 2
+      },
+      {
+        q: "Dos microservicios deben autenticarse mutuamente antes de intercambiar expedientes sensibles. ¿Qué mecanismo ofrece identidad criptográfica en ambos extremos del canal?",
+        o: ["TLS mutuo con certificados para cliente y servidor", "HTTP sin cifrado dentro de la red interna", "Una contraseña compartida incluida en la URL", "Resolución DNS sin validación adicional"], a: 0
+      },
+      {
+        q: "Una empresa conectará de manera permanente dos redes privadas a través de internet y necesita proteger todo el tráfico IP entre sus gateways. ¿Qué configuración es la más apropiada?",
+        o: ["TLS independiente configurado manualmente en cada archivo", "Un proxy HTTP sin autenticación", "Una VLAN extendida sin cifrado sobre internet", "Una VPN IPsec de sitio a sitio en modo túnel"], a: 3
+      },
+      {
+        q: "Una base PostgreSQL solo debe aceptar conexiones desde el segmento de servidores de aplicación por el puerto 5432. ¿Qué regla sigue el principio de mínimo privilegio?",
+        o: ["Permitir todos los puertos desde cualquier origen", "Permitir TCP 5432 únicamente desde la subred de aplicaciones y denegar los demás orígenes", "Permitir UDP 5432 desde internet", "Desactivar el firewall para evitar latencia"], a: 1
+      },
+      {
+        q: "Una aplicación construye consultas concatenando directamente el texto proporcionado por el usuario. ¿Qué cambio evita de manera principal la inyección SQL?",
+        code: "consulta = \"SELECT * FROM usuario WHERE correo = '\" + entrada + \"'\";",
+        o: ["Escapar únicamente los espacios de la entrada", "Ocultar los mensajes de error al usuario", "Utilizar consultas parametrizadas y separar datos de instrucciones SQL", "Codificar la consulta en Base64 antes de enviarla"], a: 2
+      },
+      {
+        q: "Una plataforma debe almacenar contraseñas de usuarios de forma resistente a ataques con GPU y tablas precalculadas. ¿Qué diseño es el más adecuado?",
+        o: ["Aplicar Argon2id con sal única y parámetros de costo apropiados", "Cifrar todas las contraseñas con una clave incluida en el código", "Guardar un hash MD5 idéntico para contraseñas iguales", "Almacenar las contraseñas en texto y restringir la interfaz"], a: 0
+      },
+      {
+        q: "Un atacante compromete la cuenta de un empleado y trata de desplazarse lateralmente hacia servidores que el empleado nunca utiliza. ¿Qué arquitectura reduce mejor el alcance del compromiso?",
+        o: ["Una red plana que confíe en cualquier equipo interno", "Una única contraseña administrativa para todos los servicios", "Acceso permanente después del primer inicio de sesión", "Zero Trust con microsegmentación, privilegio mínimo y evaluación continua"], a: 3
+      },
+      {
+        q: "Una organización desea que los clientes puedan verificar que las respuestas DNS no fueron modificadas ni falsificadas durante su publicación. ¿Qué tecnología proporciona autenticidad e integridad de los registros?",
+        o: ["DNS sobre UDP sin extensiones", "DNSSEC", "NAT dinámico", "DHCP Relay"], a: 1
+      },
+      {
+        q: "Un atacante conecta un servidor DHCP no autorizado y entrega gateways maliciosos a los equipos de una VLAN. ¿Qué control del conmutador mitiga directamente el ataque?",
+        o: ["Port mirroring en todos los puertos", "Desactivar la tabla de direcciones MAC", "DHCP snooping con puertos confiables definidos", "Incrementar el tiempo de concesión DHCP"], a: 2
+      },
+      {
+        q: "La organización requiere inspeccionar tráfico en línea y bloquear automáticamente paquetes que coincidan con firmas maliciosas confirmadas. ¿Qué componente cumple esta función?",
+        o: ["Sistema de prevención de intrusiones", "Sistema pasivo que solo almacene métricas", "Servidor DHCP", "Balanceador DNS sin inspección"], a: 0
+      },
+      {
+        q: "Una universidad necesita una red inalámbrica empresarial con credenciales individuales, autenticación centralizada y claves de sesión distintas por usuario. ¿Qué solución es apropiada?",
+        o: ["WEP con una clave compartida para todo el campus", "WPA2-Personal con la contraseña publicada", "Una red abierta protegida únicamente por el portal web", "WPA3-Enterprise con 802.1X y RADIUS"], a: 3
+      },
+      {
+        q: "Una aplicación web delega el inicio de sesión a un proveedor de identidad y después llama una API con permisos limitados. ¿Qué combinación separa correctamente autenticación y autorización delegada?",
+        o: ["SNMP para autenticar y FTP para autorizar", "OpenID Connect para identidad y OAuth 2.0 con alcances para acceso a la API", "DNSSEC para iniciar sesión y ARP para asignar permisos", "SMTP para emitir tokens y DHCP para validarlos"], a: 1
+      },
+      {
+        q: "Servidores de base de datos en la nube no deben aceptar conexiones entrantes desde internet, pero necesitan descargar actualizaciones. ¿Qué diseño de red satisface el requisito?",
+        o: ["Asignar una IP pública a cada base y permitir todos los puertos", "Colocar las bases en una subred pública con acceso administrativo abierto", "Ubicarlas en subredes privadas y proporcionar salida controlada mediante NAT o un proxy de actualizaciones", "Conectar directamente las bases a internet sin tabla de rutas"], a: 2
+      },
+      {
+        q: "Un ransomware cifra la base de producción y los respaldos montados en el mismo dominio administrativo. ¿Qué práctica aumenta de manera decisiva la capacidad de recuperación?",
+        o: ["Mantener respaldos inmutables o desconectados y probar periódicamente su restauración", "Conservar una única copia en el servidor afectado", "Desactivar el historial de respaldos para ahorrar espacio", "Replicar inmediatamente los archivos cifrados sobre todas las copias"], a: 0
+      },
+      {
+        n: 106,
+        q: "Un banco entrena un modelo para detectar fraude. Solo 0.2 % de las transacciones son fraudulentas y la exactitud obtenida es de 99.8 %, aunque el modelo casi nunca detecta fraudes. ¿Qué métrica permite comparar mejor modelos en este escenario?",
+        o: ["Área bajo la curva precisión-recall", "Error cuadrático medio", "Coeficiente de determinación", "Exactitud global sin ponderación"], a: 0
+      },
+      {
+        n: 107,
+        q: "En un sistema de diagnóstico, un falso negativo tiene un costo estimado diez veces mayor que un falso positivo. El modelo entrega probabilidades calibradas. ¿Cómo debe seleccionarse el umbral de clasificación?",
+        o: ["Fijarlo siempre en 0.5 para conservar la interpretación probabilística", "Elegirlo minimizando el costo esperado según ambos tipos de error", "Maximizar únicamente la especificidad sin considerar la sensibilidad", "Ajustarlo hasta obtener la misma cantidad de positivos y negativos"], a: 1
+      },
+      {
+        n: 108,
+        q: "Una empresa entrena un modelo para pronosticar demanda semanal utilizando cinco años de datos. ¿Qué estrategia de validación evita utilizar información futura durante la evaluación?",
+        o: ["Dividir aleatoriamente todas las semanas en entrenamiento y prueba", "Aplicar validación progresiva con ventanas ordenadas temporalmente", "Duplicar las semanas recientes en ambos conjuntos", "Usar los datos futuros para normalizar las observaciones históricas"], a: 1
+      },
+      {
+        n: 109,
+        q: "Un equipo estandariza todas las variables antes de separar los datos en entrenamiento y prueba. Después obtiene un desempeño considerablemente mayor al observado en producción. ¿Cuál es la causa más probable?",
+        o: ["Subajuste provocado por utilizar variables normalizadas", "Fuga de información al estimar parámetros con datos de prueba", "Falta de convergencia causada por la separación posterior", "Aumento de varianza por conservar la media de cada variable"], a: 1
+      },
+      {
+        n: 110,
+        q: "Una plataforma clasifica documentos mediante cientos de miles de características dispersas obtenidas con TF-IDF. Se requiere un modelo interpretable y eficiente que seleccione características relevantes. ¿Qué alternativa es más adecuada como línea base?",
+        o: ["Regresión logística con regularización L1", "Regresión lineal sin función de enlace", "K-means con distancia euclidiana", "Una red recurrente aplicada a la matriz completa sin regularización"], a: 0
+      },
+      {
+        n: 111,
+        q: "Un modelo de riesgo asigna probabilidad de incumplimiento cercana a 0.8 a un grupo de clientes, pero solo 50 % de ellos incumple. ¿Qué propiedad del modelo presenta una deficiencia?",
+        o: ["Separabilidad lineal", "Calibración probabilística", "Invarianza de escala", "Reducción dimensional"], a: 1
+      },
+      {
+        n: 112,
+        q: "Después de desplegar un clasificador, cambia la distribución de edades y ubicaciones de los usuarios, pero la relación entre las variables y la clase permanece estable. ¿Qué fenómeno se observa principalmente?",
+        o: ["Cambio de covariables", "Cambio de concepto", "Colapso de modo", "Fuga de etiquetas"], a: 0
+      },
+      {
+        n: 113,
+        q: "Un modelo de crédito utiliza ingreso mensual y capacidad de pago, variables altamente correlacionadas. Al analizar valores SHAP, la importancia se reparte de manera inestable entre ambas. ¿Cómo debe interpretarse este resultado?",
+        o: ["Como evidencia de que ninguna variable influye en la predicción", "Considerando que la correlación puede distribuir la atribución entre variables relacionadas", "Eliminando automáticamente la variable con el menor valor SHAP global", "Sumando las atribuciones sin revisar la dependencia entre características"], a: 1
+      },
+      {
+        n: 114,
+        q: "Una organización quiere que personas calificadas tengan una probabilidad similar de ser aprobadas por el modelo, independientemente del grupo demográfico al que pertenezcan. ¿Qué criterio de equidad corresponde mejor al objetivo?",
+        o: ["Paridad en la tasa de verdaderos positivos", "Igualdad en el número total de observaciones", "Paridad en la media de todas las variables de entrada", "Igualdad en la cantidad de parámetros del modelo"], a: 0
+      },
+      {
+        n: 115,
+        q: "En un estudio médico, los pacientes con síntomas más graves tienden a omitir deliberadamente una pregunta sobre consumo de sustancias. La ausencia depende del valor que no fue reportado. ¿Qué mecanismo de datos faltantes describe mejor el escenario?",
+        o: ["Datos faltantes completamente al azar", "Datos faltantes al azar condicionados solo por variables observadas", "Datos faltantes no al azar", "Datos censurados únicamente por un error de captura uniforme"], a: 2
+      },
+      {
+        n: 116,
+        q: "Un equipo debe identificar agrupaciones geográficas de forma irregular y separar observaciones aisladas como ruido, sin conocer previamente el número de grupos. ¿Qué algoritmo resulta más adecuado?",
+        o: ["DBSCAN o una variante jerárquica basada en densidad", "K-means con un único centroide", "Regresión logística multinomial", "Análisis discriminante lineal supervisado"], a: 0
+      },
+      {
+        n: 117,
+        q: "Una planta industrial dispone de millones de registros de operación normal y muy pocos ejemplos de fallas. ¿Qué enfoque permite detectar patrones anómalos sin requerir una colección amplia de fallas etiquetadas?",
+        o: ["Entrenar un autoencoder con datos normales y analizar el error de reconstrucción", "Ajustar una regresión lineal para predecir una etiqueta constante", "Entrenar un clasificador multiclase únicamente con las fallas conocidas", "Aplicar sobremuestreo aleatorio antes de definir las clases"], a: 0
+      },
+      {
+        n: 118,
+        q: "Una red de pagos contiene cuentas, dispositivos y transacciones. Los fraudes suelen manifestarse mediante comunidades y rutas entre entidades, no solo mediante atributos individuales. ¿Qué tipo de modelo aprovecha mejor esta información?",
+        o: ["Una red neuronal de grafos", "Un modelo autorregresivo univariado", "Un clasificador que descarte todas las conexiones", "Una descomposición de frecuencia sobre cada cuenta aislada"], a: 0
+      },
+      {
+        n: 119,
+        q: "Un asistente empresarial debe responder con información contenida en manuales que cambian semanalmente. La organización no desea reentrenar el modelo cada vez que se actualiza un documento. ¿Qué arquitectura es más adecuada?",
+        o: ["Generación aumentada mediante recuperación sobre documentos indexados", "Entrenamiento desde cero después de cada modificación", "Uso exclusivo del conocimiento paramétrico del modelo", "Sustitución de los documentos por una lista fija dentro del prompt"], a: 0
+      },
+      {
+        n: 120,
+        q: "Un buscador debe recuperar documentos conceptualmente relacionados aunque no compartan las mismas palabras con la consulta. ¿Qué representación facilita esta recuperación?",
+        o: ["Embeddings densos comparados mediante una medida de similitud", "Identificadores aleatorios asignados a cada documento", "Conteo exclusivo de coincidencias exactas de caracteres", "Ordenamiento por fecha sin considerar el contenido"], a: 0
+      },
+      {
+        n: 121,
+        q: "Una empresa necesita adaptar un modelo de lenguaje de gran tamaño a su terminología jurídica. Dispone de capacidad limitada de GPU y quiere conservar la mayoría de los parámetros originales congelados. ¿Qué técnica es apropiada?",
+        o: ["Ajuste eficiente mediante adaptadores de bajo rango", "Reentrenamiento completo de todos los parámetros desde valores aleatorios", "Eliminación del mecanismo de atención durante el ajuste", "Conversión del modelo en un algoritmo de agrupamiento"], a: 0
+      },
+      {
+        n: 122,
+        q: "Un asistente genera respuestas plausibles, pero inventa políticas internas que no aparecen en las fuentes corporativas. ¿Qué estrategia reduce mejor este comportamiento y permite auditar las respuestas?",
+        o: ["Recuperar evidencia autorizada, exigir citas y permitir abstención cuando no exista soporte", "Aumentar la temperatura para producir respuestas más variadas", "Eliminar las instrucciones que limitan el contexto permitido", "Pedir al modelo que complete los datos ausentes mediante creatividad"], a: 0
+      },
+      {
+        n: 123,
+        q: "Un modelo debe ejecutarse en un dispositivo periférico con memoria limitada. La versión original utiliza pesos de 32 bits y cumple el nivel de exactitud requerido. ¿Qué técnica debe evaluarse para reducir memoria y latencia?",
+        o: ["Cuantización de pesos y, cuando sea viable, de activaciones", "Incremento del número de capas y parámetros", "Duplicación de los tensores durante cada inferencia", "Conversión de todas las operaciones en precisión superior a 64 bits"], a: 0
+      },
+      {
+        n: 124,
+        q: "Varios hospitales quieren entrenar un modelo conjunto sin centralizar expedientes clínicos. Los datos de cada hospital tienen distribuciones diferentes. ¿Qué diseño responde mejor al requisito?",
+        o: ["Aprendizaje federado con agregación segura y tratamiento de datos no idénticamente distribuidos", "Publicación abierta de todos los expedientes en un repositorio común", "Entrenamiento independiente sin compartir ninguna actualización", "Transferencia manual de las bases mediante archivos sin cifrado"], a: 0
+      },
+      {
+        n: 125,
+        q: "Un mecanismo de privacidad diferencial agrega ruido durante el entrenamiento. ¿Qué ocurre generalmente al reducir de manera importante el parámetro ε?",
+        o: ["Se fortalece la garantía de privacidad, aunque puede disminuir la utilidad del modelo", "Se elimina el ruido y aumenta la exposición de cada registro", "Se garantiza una exactitud perfecta para cualquier conjunto de datos", "Se incrementa el número de atributos personales almacenados"], a: 0
+      },
+      {
+        n: 126,
+        q: "Un agente de aprendizaje por refuerzo obtiene una recompensa alta apagando el sensor que detecta errores, en vez de completar correctamente la tarea. ¿Qué problema evidencia este comportamiento?",
+        o: ["Explotación de una especificación incompleta de la recompensa", "Reducción de dimensionalidad excesiva", "Validación cruzada estratificada", "Calibración isotónica de la política"], a: 0
+      },
+      {
+        n: 127,
+        q: "Una plataforma de noticias debe elegir artículos para cada usuario y aprender continuamente, equilibrando recomendaciones conocidas con alternativas nuevas. ¿Qué enfoque modela directamente esta decisión?",
+        o: ["Bandido contextual con una estrategia de exploración y explotación", "Agrupamiento jerárquico ejecutado una sola vez", "Regresión sin utilizar el contexto del usuario", "Ordenamiento alfabético determinista de todos los artículos"], a: 0
+      },
+      {
+        n: 128,
+        q: "Una empresa quiere estimar el efecto causal de enviar una promoción. Los clientes con mayor probabilidad de comprar también fueron quienes recibieron más promociones. ¿Qué aspecto debe abordarse antes de interpretar la correlación como efecto?",
+        o: ["El sesgo de confusión en la asignación del tratamiento", "La cantidad de capas de una red neuronal", "El formato de almacenamiento de los identificadores", "La distancia entre los centroides de clientes"], a: 0
+      },
+      {
+        n: 129,
+        q: "En una prueba A/B, la asignación configurada era 50/50, pero 80 % de los usuarios terminó en la variante B. Antes de analizar conversiones, ¿qué debe hacer el equipo?",
+        o: ["Investigar una posible discrepancia en la proporción de muestra", "Declarar ganadora a la variante B por tener más observaciones", "Duplicar los resultados de la variante A", "Comparar solo las medias sin revisar la asignación"], a: 0
+      },
+      {
+        n: 130,
+        q: "Un laboratorio posee millones de imágenes sin etiqueta y solo cientos de imágenes clasificadas por especialistas. ¿Qué estrategia puede aprovechar el conjunto no etiquetado?",
+        o: ["Preentrenamiento autosupervisado seguido de ajuste con las etiquetas disponibles", "Eliminación de todas las imágenes que no tengan etiqueta", "Entrenamiento supervisado asignando una clase aleatoria a cada imagen", "Evaluación directa sobre las imágenes sin ajustar ningún componente"], a: 0
+      },
+      {
+        n: 131,
+        q: "Un sistema debe relacionar descripciones textuales con imágenes de productos, incluso para categorías no vistas durante el entrenamiento supervisado. ¿Qué enfoque resulta adecuado?",
+        o: ["Aprendizaje contrastivo para alinear representaciones de texto e imagen", "Regresión univariada sobre el tamaño del archivo", "Agrupamiento separado sin espacio de representación compartido", "Sustitución de ambas modalidades por identificadores consecutivos"], a: 0
+      },
+      {
+        n: 132,
+        q: "Un transformador procesa documentos muy extensos y el consumo de memoria crece de manera cuadrática con la longitud de la secuencia. ¿Qué componente causa principalmente este comportamiento?",
+        o: ["El cálculo completo de atención entre pares de tokens", "La codificación de cada carácter como entero", "La normalización de las etiquetas de salida", "El almacenamiento de una sola representación global"], a: 0
+      },
+      {
+        n: 133,
+        q: "Durante el entrenamiento de una red recurrente, las normas de los gradientes aumentan abruptamente y los pesos se vuelven numéricamente inestables. ¿Qué medida aborda directamente este problema?",
+        o: ["Aplicar recorte de gradientes", "Eliminar el conjunto de validación", "Aumentar indefinidamente la tasa de aprendizaje", "Sustituir las etiquetas por valores aleatorios"], a: 0
+      },
+      {
+        n: 134,
+        q: "Un modelo profundo presenta pérdidas inestables durante las primeras iteraciones cuando se entrena con una tasa de aprendizaje objetivo elevada. Después de estabilizarse puede utilizar esa tasa sin problemas. ¿Qué estrategia es apropiada?",
+        o: ["Incrementar gradualmente la tasa mediante un periodo de calentamiento", "Mantener la tasa máxima desde el primer lote", "Reinicializar el modelo después de cada época", "Detener el cálculo de gradientes en todas las capas"], a: 0
+      },
+      {
+        n: 135,
+        q: "Se requiere reproducir exactamente un modelo desplegado seis meses atrás. El equipo conserva el archivo del modelo, pero desconoce la versión de los datos, el código y los hiperparámetros utilizados. ¿Qué práctica habría evitado esta situación?",
+        o: ["Registrar versiones de datos, código, configuración, entorno y artefactos del experimento", "Conservar únicamente una captura de pantalla de las métricas", "Sobrescribir el modelo anterior en cada despliegue", "Permitir ajustes manuales sin historial de cambios"], a: 0
+      },
+      {
+        n: 136,
+        q: "Un equipo quiere evaluar un modelo nuevo con tráfico real sin utilizar todavía sus predicciones para tomar decisiones. ¿Qué estrategia de despliegue permite hacerlo?",
+        o: ["Despliegue en sombra con comparación de resultados", "Sustitución inmediata del modelo para todos los usuarios", "Eliminación del modelo vigente antes de iniciar las pruebas", "Entrenamiento utilizando directamente las respuestas futuras"], a: 0
+      },
+      {
+        n: 137,
+        q: "Las etiquetas reales de un modelo de cobranza tardan tres meses en conocerse. El equipo necesita detectar problemas antes de contar con esas etiquetas. ¿Qué monitoreo temprano resulta más útil?",
+        o: ["Vigilar cambios en distribuciones, calidad de datos y comportamiento de las predicciones", "Calcular únicamente la exactitud con etiquetas todavía inexistentes", "Desactivar el registro de entradas hasta recibir resultados", "Comparar exclusivamente el tamaño del archivo del modelo"], a: 0
+      },
+      {
+        n: 138,
+        q: "Una empresa genera datos sintéticos para compartirlos con investigadores. El conjunto no contiene identificadores directos, pero el generador fue entrenado con registros sensibles. ¿Qué riesgo debe evaluarse?",
+        o: ["Memorización y ataques de pertenencia o reconstrucción de registros", "Imposibilidad absoluta de ejecutar análisis estadístico", "Eliminación automática de cualquier correlación útil", "Conversión inevitable de todas las variables en texto"], a: 0
+      },
+      {
+        n: 139,
+        q: "Un sistema médico necesita acompañar cada predicción con un conjunto de posibles diagnósticos que alcance una cobertura estadística objetivo bajo supuestos definidos. ¿Qué técnica está orientada a este propósito?",
+        o: ["Predicción conforme", "Agrupamiento por K-means", "Descenso de gradiente sin conjunto de calibración", "Codificación one-hot de las salidas"], a: 0
+      },
+      {
+        n: 140,
+        q: "Un servicio de inferencia en GPU recibe solicitudes individuales de manera irregular. La utilización del dispositivo es baja, pero la latencia máxima permitida impide esperar demasiado. ¿Qué estrategia equilibra mejor rendimiento y latencia?",
+        o: ["Agrupamiento dinámico de solicitudes con una ventana de espera limitada", "Procesamiento permanente de lotes enormes sin límite de espera", "Ejecución de cada operación exclusivamente en almacenamiento secundario", "Duplicación completa del modelo para cada solicitud recibida"], a: 0
+      }
+    ];
+
+    const modules = [
+      { start: 0, end: 35, label: "Parte 1", available: true },
+      { start: 35, end: 70, label: "Parte 2", available: true },
+      { start: 70, end: 105, label: "Parte 3", available: true },
+      { start: 105, end: 140, label: "Parte 4", available: true }
+    ];
+    const EXAM_TOTAL = 140;
+    const STORAGE_KEY = "simulacro-egel-computacion-inteligente-140-v4";
+    const PREVIOUS_V3_KEY = "guia-ingenieria-software-partes-1-2-4-v3";
+    const PREVIOUS_V2_KEY = "guia-ingenieria-software-partes-1-2-v2";
+    const LEGACY_STORAGE_KEY = "simulacro-analisis-diseno-modulo-1-v1";
+    const letters = ["A", "B", "C", "D"];
+    let current = 0;
+    let answers = Array(questions.length).fill(null);
+    let renderedModule = -1;
+
+    try {
+      let saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
+      if (Array.isArray(saved) && saved.length === questions.length) {
+        answers = saved.map((value, index) => Number.isInteger(value) && value >= 0 && value < questions[index].o.length ? value : null);
+      } else {
+        const previousV3 = JSON.parse(localStorage.getItem(PREVIOUS_V3_KEY));
+        if (Array.isArray(previousV3) && previousV3.length === 105) {
+          const sanitize = value => Number.isInteger(value) && value >= 0 && value <= 3 ? value : null;
+          answers = previousV3.slice(0, 70).map(sanitize)
+            .concat(Array(35).fill(null), previousV3.slice(70).map(sanitize));
+        } else {
+          const previousV2 = JSON.parse(localStorage.getItem(PREVIOUS_V2_KEY));
+          if (Array.isArray(previousV2) && previousV2.length === 70) {
+            answers = previousV2.map((value, index) => Number.isInteger(value) && value >= 0 && value < questions[index].o.length ? value : null)
+              .concat(Array(70).fill(null));
+          } else {
+            const legacy = JSON.parse(localStorage.getItem(LEGACY_STORAGE_KEY));
+            if (Array.isArray(legacy) && legacy.length === 35) {
+              answers = legacy.map((value, index) => Number.isInteger(value) && value >= 0 && value < questions[index].o.length ? value : null)
+                .concat(Array(105).fill(null));
+            }
+          }
+        }
+      }
+    } catch (_) {}
+
+    const qTitle = document.getElementById("question-title");
+    const qNumber = document.getElementById("questionNumber");
+    const codeBlock = document.getElementById("codeBlock");
+    const optionsEl = document.getElementById("options");
+    const statusBadge = document.getElementById("statusBadge");
+    const feedback = document.getElementById("feedback");
+    const progressBar = document.getElementById("progressBar");
+    const progressText = document.getElementById("progressText");
+    const scoreValue = document.getElementById("scoreValue");
+    const answeredValue = document.getElementById("answeredValue");
+    const navigator = document.getElementById("navigator");
+    const moduleMenu = document.getElementById("moduleMenu");
+    const prevBtn = document.getElementById("prevBtn");
+    const nextBtn = document.getElementById("nextBtn");
+    const resetBtn = document.getElementById("resetBtn");
+    const completion = document.getElementById("completion");
+    const completionText = document.getElementById("completionText");
+
+    function counts() {
+      const answered = answers.filter(a => a !== null).length;
+      const correct = answers.reduce((total, answer, index) => total + (answer === questions[index].a ? 1 : 0), 0);
+      return { answered, correct };
+    }
+
+    function save() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(answers));
+    }
+
+    function moduleFor(index) {
+      if (index < modules[1].start) return 0;
+      if (index < modules[2].start) return 1;
+      if (index < modules[3].start) return 2;
+      return 3;
+    }
+
+    function questionNumber(index) {
+      return questions[index].n || index + 1;
+    }
+
+    function buildNavigator() {
+      const activeModule = moduleFor(current);
+      if (renderedModule === activeModule && navigator.children.length) return;
+      renderedModule = activeModule;
+      navigator.innerHTML = "";
+      const { start, end } = modules[activeModule];
+      for (let index = start; index < end; index++) {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "nav-dot";
+        button.textContent = questionNumber(index);
+        button.dataset.index = index;
+        button.setAttribute("aria-label", `Ir a la pregunta ${questionNumber(index)}`);
+        button.addEventListener("click", () => goTo(index));
+        navigator.appendChild(button);
+      }
+    }
+
+    function updateSummary() {
+      const { answered, correct } = counts();
+      const percentage = Math.round((answered / questions.length) * 100);
+      progressBar.style.width = `${percentage}%`;
+      progressText.textContent = `${answered} de ${questions.length}`;
+      scoreValue.textContent = correct;
+      answeredValue.textContent = answered;
+
+      [...navigator.children].forEach(button => {
+        const index = Number(button.dataset.index);
+        button.classList.toggle("current", index === current);
+        button.classList.remove("good", "bad");
+        if (answers[index] !== null) {
+          button.classList.add(answers[index] === questions[index].a ? "good" : "bad");
+        }
+      });
+
+      [...moduleMenu.querySelectorAll(".module-button")].forEach((button, moduleIndex) => {
+        const { start, end, available } = modules[moduleIndex];
+        if (!available) {
+          button.classList.remove("active");
+          button.setAttribute("aria-current", "false");
+          return;
+        }
+        const moduleAnswered = answers.slice(start, end).filter(answer => answer !== null).length;
+        button.classList.toggle("active", moduleIndex === moduleFor(current));
+        button.setAttribute("aria-current", moduleIndex === moduleFor(current) ? "page" : "false");
+        document.getElementById(`moduleCount${moduleIndex}`).textContent = `${moduleAnswered}/${end - start}`;
+      });
+
+      const finished = answered === questions.length;
+      completion.classList.toggle("visible", finished);
+      if (finished) {
+        const grade = Math.round((correct / questions.length) * 100);
+        completionText.textContent = `Obtuviste ${correct} de ${questions.length} respuestas correctas (${grade} %).`;
+      }
+    }
+
+    function render() {
+      const question = questions[current];
+      const selected = answers[current];
+      qNumber.textContent = `${modules[moduleFor(current)].label} · Pregunta ${questionNumber(current)} de ${EXAM_TOTAL}`;
+      qTitle.textContent = question.q;
+      codeBlock.textContent = question.code || "";
+      codeBlock.classList.toggle("visible", Boolean(question.code));
+      optionsEl.innerHTML = "";
+
+      question.o.forEach((optionText, index) => {
+        const label = document.createElement("label");
+        label.className = "option";
+        if (selected !== null) label.classList.add("locked");
+        if (selected === index) label.classList.add("selected");
+        if (selected !== null && index === question.a) label.classList.add("correct");
+        if (selected !== null && selected === index && selected !== question.a) label.classList.add("incorrect");
+
+        const input = document.createElement("input");
+        input.type = "radio";
+        input.name = `question-${current}`;
+        input.value = index;
+        input.checked = selected === index;
+        input.disabled = selected !== null;
+        input.addEventListener("change", () => answerQuestion(index));
+
+        const letter = document.createElement("span");
+        letter.className = "letter";
+        letter.textContent = letters[index];
+
+        const text = document.createElement("span");
+        text.className = "option-text";
+        text.textContent = optionText;
+
+        label.append(input, letter, text);
+        optionsEl.appendChild(label);
+      });
+
+      statusBadge.className = "status-badge";
+      feedback.className = "feedback";
+      feedback.textContent = "";
+
+      if (selected !== null) {
+        const isCorrect = selected === question.a;
+        statusBadge.classList.add("visible", isCorrect ? "good" : "bad");
+        statusBadge.textContent = isCorrect ? "✓ Correcta" : "✕ Incorrecta";
+        feedback.classList.add("visible", isCorrect ? "good" : "bad");
+        feedback.textContent = isCorrect
+          ? "Respuesta correcta."
+          : `Respuesta incorrecta. La opción correcta es ${letters[question.a]}.`;
+      }
+
+      prevBtn.disabled = current === 0;
+      nextBtn.disabled = current === questions.length - 1;
+      nextBtn.textContent = current === questions.length - 1 ? "Fin de la guía" : "Siguiente →";
+      buildNavigator();
+      updateSummary();
+    }
+
+    function answerQuestion(index) {
+      if (answers[current] !== null) return;
+      answers[current] = index;
+      save();
+      render();
+    }
+
+    function goTo(index) {
+      current = Math.max(0, Math.min(index, questions.length - 1));
+      render();
+      document.querySelector(".exam").scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+
+    prevBtn.addEventListener("click", () => goTo(current - 1));
+    nextBtn.addEventListener("click", () => {
+      if (current < questions.length - 1) goTo(current + 1);
+    });
+
+    moduleMenu.querySelectorAll(".module-button").forEach((button, moduleIndex) => {
+      if (modules[moduleIndex].available) {
+        button.addEventListener("click", () => goTo(modules[moduleIndex].start));
+      }
+    });
+
+    resetBtn.addEventListener("click", () => {
+      if (!confirm("¿Deseas borrar todas tus respuestas y reiniciar el intento?")) return;
+      answers = Array(questions.length).fill(null);
+      current = 0;
+      save();
+      render();
+    });
+
+    document.addEventListener("keydown", event => {
+      if (event.key === "ArrowLeft" && current > 0) goTo(current - 1);
+      if (event.key === "ArrowRight" && current < questions.length - 1) goTo(current + 1);
+    });
+
+    render();
+  </script>
+</body>
+</html>
